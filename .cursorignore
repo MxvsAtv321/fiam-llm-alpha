@@ -1,0 +1,11 @@
+mlruns/**
+data/**
+artifacts/**
+reports/**
+.dvc/**
+.cache/**
+.venv/**
+**/*.parquet
+**/*.feather
+**/*.arrow
+**/*.csv

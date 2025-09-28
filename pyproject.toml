@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fiam-llm-alpha"
+version = "0.1.0"
+description = "LLM-powered sentiment signal pipeline with long-short backtest for McGill FIAM Hackathon"
+authors = [{ name = "FIAM Hackathon Team" }]
+requires-python = ">=3.11,<3.12"
+readme = "docs/README.md"
+license = { text = "MIT" }
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fiam_llm*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "UP", "B", "N", "C90", "W"]
+ignore = ["E203", "E266", "E501", "W503"]
+fix = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+check_untyped_defs = true
+strict_equality = true
+pretty = true
+show_error_codes = true
+mypy_path = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+minversion = "7.0"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = ["tests/*", "*/__init__.py"]
