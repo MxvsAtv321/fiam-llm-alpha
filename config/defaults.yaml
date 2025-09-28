@@ -1,0 +1,51 @@
+paths:
+  raw_dir: data/raw
+  derived_dir: data/derived
+  embeddings_dir: data/embeddings
+  artifacts_dir: artifacts
+  reports_dir: reports
+  mlruns_dir: mlruns
+
+embedding:
+  model_name: dummy  # use 'ProsusAI/finbert' for full run
+  max_tokens: 1024
+  batch_size: 16
+  pca_dim: 64
+  device: cpu
+  cache: true
+
+text_model:
+  type: lexicon_only  # 'elasticnet' or 'lightgbm'
+  en_grid:
+    alpha: [0.0005, 0.001, 0.01]
+    l1_ratio: [0.0, 0.1, 0.5]
+  lgbm_grid:
+    num_leaves: [15, 31]
+    learning_rate: [0.05, 0.1]
+    n_estimators: [200, 400]
+
+blend:
+  orthogonalize: false
+  use_fixed_effects: false
+
+portfolio:
+  top_n: 100
+  bottom_n: 100
+  band_fraction: 0.1  # 10% score band to reduce churn
+
+seeds:
+  numpy: 42
+  torch: 42
+  sklearn: 42
+
+universe:
+  oos_start: "2015-01"
+  oos_end: "2025-05"
+  train_start: "2005-01"
+
+files:
+  ret_panel: data/raw/ret_sample.csv
+  factors_list: data/raw/factor_char_list.csv
+  cik_gvkey: data/raw/cik_gvkey_linktable.csv
+  filings_glob: data/raw/filings/*.csv
+  market_index: data/raw/mkt_ind.csv
