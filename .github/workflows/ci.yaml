@@ -24,6 +24,14 @@ jobs:
         shell: bash -l {0}
         run: |
           make lint
+      - name: Build pipeline artifacts
+        shell: bash -l {0}
+        run: |
+          make run-embeddings
+          make run-text
+          make run-train
+          make run-blend
+          make run-scores
       - name: Tests
         shell: bash -l {0}
         run: |

@@ -37,9 +37,10 @@ def align_text_to_month(df: pl.DataFrame, date_col: str = "filing_date") -> pl.D
         pl.col("_date").dt.strftime("%Y-%m").alias("year_month"),
         pl.col("_date").dt.month_end().alias("month_end"),
     )
-    # Ensure no forward-looking: data is timestamped at filing_date and compared to month_end
-    # Consumers must filter by filing_date <= month_end(t). Here we only provide fields.
-    return out.drop("_date")
+    # Ensure no forward-looking: filing_date <= month_end(year_month)
+    chk = out.with_columns(pl.col(date_col).str.strptime(pl.Date, strict=False).alias("_f"))
+    assert (chk["_f"] <= chk["month_end"]).all(), "Time leakage: filing after month_end"
+    return out.drop(["_date"])  # keep month_end for downstream checks
 
 
 def month_filter(df: pl.DataFrame, ym: str) -> pl.DataFrame:

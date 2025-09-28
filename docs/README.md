@@ -1,25 +1,20 @@
 # FIAM LLM Alpha
 
+![CI](https://github.com/your-username/fiam-llm-alpha/actions/workflows/ci.yaml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 End-to-end pipeline to generate an LLM-powered sentiment score from 10-K/10-Q sections and backtest a long-short strategy.
 
 ## Quickstart
 
 1. Create environment and install hooks:
 ```bash
-make setup
+make setup && make init
 ```
-2. Initialize git-lfs and DVC (optional):
+2. Run the pipeline on fixtures/synthetic and tests:
 ```bash
-make init
-```
-3. Run the pipeline on fixtures/synthetic:
-```bash
-make run-embeddings
-make run-text
-make run-train
-make run-blend
-make run-scores
-make run-backtest
+pytest --maxfail=1 --cov=src
+make run-embeddings && make run-text && make run-train && make run-blend && make run-scores && make run-backtest
 ```
 
 Artifacts:

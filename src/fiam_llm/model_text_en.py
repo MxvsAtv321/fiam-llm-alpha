@@ -36,6 +36,37 @@ def erfinv(y: pd.Series | np.ndarray) -> np.ndarray:
     return s * np.sqrt(np.sqrt(first ** 2 - ln / a) - first)
 
 
+def _month_range(start: str, end: str) -> List[str]:
+    s = pd.Period(start, freq="M")
+    e = pd.Period(end, freq="M")
+    return [str(p) for p in pd.period_range(s, e, freq="M")]
+
+
+def make_windows(train_start: str, first_oos_year: int, last_oos: str) -> List[dict]:
+    """Create expanding windows per year.
+    For OOS year Y: train = train_start..Y-2, val = Y-1..Y, oos = Y-01..Y-12 (bounded by last_oos).
+    """
+    last = pd.Period(last_oos, freq="M")
+    windows: List[dict] = []
+    for Y in range(first_oos_year, last.year + 1):
+        train_end = f"{Y-2}-12"
+        val_start = f"{Y-1}-01"
+        val_end = f"{Y}-12"
+        oos_start = f"{Y}-01"
+        oos_end = f"{Y}-12"
+        if Y == last.year:
+            oos_end = str(last)
+            val_end = str(min(pd.Period(f"{Y}-12", freq="M"), last))
+        w = {
+            "oos_year": Y,
+            "train": _month_range(train_start, train_end),
+            "val": _month_range(val_start, val_end),
+            "oos": _month_range(oos_start, oos_end),
+        }
+        windows.append(w)
+    return windows
+
+
 class ExpandingWindowTextModel:
     def __init__(self, cfg: ModelConfig) -> None:
         self.cfg = cfg

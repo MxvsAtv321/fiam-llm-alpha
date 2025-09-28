@@ -27,7 +27,6 @@ class DeterministicStubEmbedder:
 
     def embed_text(self, text: str) -> np.ndarray:
         tokens = self._tokenize(text)
-        # Deterministic bag-of-words hashing to 256 dims as stub feature
         vec = np.zeros(256, dtype=np.float32)
         for t in tokens:
             h = abs(hash(t)) % 256
@@ -47,3 +46,77 @@ class DeterministicStubEmbedder:
             return X[:, : self.cfg.pca_dim]
         Z = self.pca.transform(X)
         return Z.astype(np.float32)
+
+
+# Optional FinBERT-compatible embedder with cache
+from pathlib import Path
+import pandas as pd
+
+try:  # deferred import
+    import torch
+    from transformers import AutoTokenizer, AutoModel
+except Exception:  # pragma: no cover
+    AutoTokenizer = AutoModel = None
+    torch = None
+
+
+class SectionEmbedder:
+    def __init__(self, model_name: str, pca_dim: int = 64, cache_path: str = "data/embeddings/sections_pca.parquet"):
+        self.model_name = model_name
+        self.pca_dim = pca_dim
+        self.cache_path = Path(cache_path)
+        self._tok = None
+        self._mdl = None
+        self._pca = PCA(n_components=pca_dim, random_state=42)
+
+    def _load_hf(self) -> None:
+        assert AutoTokenizer is not None, "Transformers not installed."
+        if self._tok is None or self._mdl is None:  # pragma: no cover
+            self._tok = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
+            self._mdl = AutoModel.from_pretrained(self.model_name)
+            self._mdl.eval()
+            if torch is not None and torch.cuda.is_available():
+                self._mdl.cuda()
+
+    def _encode_chunks(self, texts: Iterable[str], max_len: int = 512) -> np.ndarray:
+        self._load_hf()
+        outs: List[np.ndarray] = []
+        for t in texts:  # pragma: no cover (heavy path not covered in CI)
+            toks = self._tok(t, truncation=False, add_special_tokens=False)["input_ids"]
+            vecs: List[np.ndarray] = []
+            for i in range(0, len(toks), max_len):
+                chunk = toks[i : i + max_len]
+                if not chunk:
+                    break
+                enc = self._tok.encode_plus(chunk, is_split_into_words=False, return_tensors="pt", add_special_tokens=True, truncation=True, max_length=max_len)
+                if torch is not None and torch.cuda.is_available():
+                    enc = {k: v.cuda() for k, v in enc.items()}
+                with torch.no_grad():
+                    out = self._mdl(**enc).last_hidden_state  # [1, L, H]
+                    attn = enc["attention_mask"].float()  # [1, L]
+                    w = attn / (attn.sum(dim=1, keepdim=True) + 1e-8)
+                    pooled = (out * w.unsqueeze(-1)).sum(dim=1)  # [1, H]
+                vecs.append(pooled.squeeze(0).detach().cpu().numpy())
+            if len(vecs) == 0 and self._mdl is not None:
+                outs.append(np.zeros(self._mdl.config.hidden_size, dtype=np.float32))
+            else:
+                outs.append(np.stack(vecs, 0).mean(0).astype(np.float32))
+        return np.stack(outs, 0)
+
+    def fit_transform_pca(self, X: np.ndarray) -> np.ndarray:
+        return self._pca.fit_transform(X).astype(np.float32)
+
+    def transform_pca(self, X: np.ndarray) -> np.ndarray:
+        return self._pca.transform(X).astype(np.float32)
+
+    def build_or_load_cache(self, df_sections: pd.DataFrame, key_cols=("gvkey", "filing_date", "section")) -> pd.DataFrame:
+        if self.cache_path.exists():
+            return pd.read_parquet(self.cache_path)
+        emb = self._encode_chunks(df_sections["text_clean"].tolist(), max_len=512)
+        Z = self.fit_transform_pca(emb)
+        cols = [f"pca_{i}" for i in range(self.pca_dim)]
+        out = pd.concat(
+            [df_sections[list(key_cols)].reset_index(drop=True), pd.DataFrame(Z, columns=cols)], axis=1
+        )
+        out.to_parquet(self.cache_path, index=False)
+        return out

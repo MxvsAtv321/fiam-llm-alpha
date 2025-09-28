@@ -4,6 +4,28 @@ import pandas as pd
 import numpy as np
 
 
+def form_long_short(df_month: pd.DataFrame, top_n: int = 100, bottom_n: int = 100,
+                    band: float = 0.0, prev: dict | None = None) -> dict:
+    """
+    band: percentile band in [0,1]; if >0, retain prev names within band to reduce churn.
+    prev: {"long": set([...]), "short": set([...])}
+    Returns dict with sets for long and short.
+    """
+    df = df_month.sort_values("score", ascending=False).reset_index(drop=True)
+    if band > 0 and prev:
+        hi = df["score"].quantile(1 - band)
+        lo = df["score"].quantile(band)
+        hi_set = set(df.loc[df["score"] >= hi, "gvkey"])
+        lo_set = set(df.loc[df["score"] <= lo, "gvkey"])
+        keep_long = [g for g in prev.get("long", set()) if g in hi_set]
+        keep_short = [g for g in prev.get("short", set()) if g in lo_set]
+    else:
+        keep_long, keep_short = [], []
+    long = list({*keep_long, *df["gvkey"].head(top_n).tolist()})[:top_n]
+    short = list({*keep_short, *df["gvkey"].tail(bottom_n).tolist()})[:bottom_n]
+    return {"long": set(long), "short": set(short)}
+
+
 def form_portfolio(scores: pd.DataFrame, top_n: int = 100, bottom_n: int = 100,
                    score_col: str = "score") -> pd.DataFrame:
     out = []
