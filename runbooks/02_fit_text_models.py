@@ -35,11 +35,18 @@ def main(config_path: str) -> None:
         sc["novelty"] = 0.0
         sc["hedge_ratio"] = 0.0
         sc["exret_next"] = 0.0
-        # For fixtures, we don't have returns here; keep zeros to test freeze mechanics only
         val_mask = sc["year_month"].between("2013-01", "2014-12")
         w = learn_composite_weights(sc.loc[val_mask])
         (Path("artifacts") / "composite_weights.json").write_text(json.dumps(w))
         mlflow.log_artifact("artifacts/composite_weights.json")
+
+        # Dummy val metrics on fixtures
+        val_ic = 0.0
+        val_metrics = {"val_ic": val_ic}
+        (Path("reports")).mkdir(exist_ok=True)
+        (Path("reports") / "val_metrics.json").write_text(json.dumps(val_metrics))
+        mlflow.log_metric("val_ic", float(val_ic))
+        mlflow.log_artifact("reports/val_metrics.json")
 
         # Apply frozen weights OOS 2015..end
         sc["combined_score"] = sc.apply(lambda r: combine_score(r, w), axis=1)
@@ -53,3 +60,4 @@ if __name__ == "__main__":
     ap.add_argument("--config", type=str, required=False, default="config/defaults.yaml")
     args = ap.parse_args()
     main(args.config)
+    
