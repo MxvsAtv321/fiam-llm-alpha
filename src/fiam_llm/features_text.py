@@ -48,6 +48,17 @@ def novelty(emb_t: np.ndarray, emb_prev: np.ndarray) -> float:
     return 1.0 - cosine_similarity(emb_t, emb_prev)
 
 
+def tone_delta(text_t: str, text_prev: str) -> float:
+    """Difference in tone proxy (pos-neg per 1k) between current and previous text.
+    Deterministic and scale-normalized.
+    """
+    cur = lm_counts_per_1k(text_t)
+    prv = lm_counts_per_1k(text_prev)
+    tone_cur = cur.get("pos_1k", 0.0) - cur.get("neg_1k", 0.0)
+    tone_prv = prv.get("pos_1k", 0.0) - prv.get("neg_1k", 0.0)
+    return float(tone_cur - tone_prv)
+
+
 def build_features(df: pl.DataFrame, text_col: str = "text_clean") -> pl.DataFrame:
     feats = []
     for row in df.iter_rows(named=True):
