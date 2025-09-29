@@ -13,6 +13,7 @@ embedding:
   pca_dim: 64
   device: cpu
   cache: true
+  use_hf_embedder: false
 
 text_model:
   type: lexicon_only  # 'elasticnet' or 'lightgbm'
