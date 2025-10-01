@@ -34,6 +34,82 @@ portfolio:
   bottom_n: 100
   band_fraction: 0.1  # 10% score band to reduce churn
 
+numeric_model:
+  feature_whitelist:
+    - book_leverage
+    - asset_growth
+    - capital_turnover
+    - change_common_equity
+    - beta
+    - high_low_spread
+    - capex_growth_1y
+    - capex_growth_2y
+    - capex_growth_3y
+    - ch_coa
+    - ch_col
+    - mkt_corr
+    - net_debt_iss
+    - book_debt_growth_3y
+    - ch_gm_minus_ch_sales
+    - div_yield
+    - dollar_trading_value
+    - rona
+    - profit_margin
+    - hiring_rate
+    - net_equity_iss
+    - ch_fin_liab
+    - gp_to_assets
+    - gp_to_lag_assets
+    - inv_growth
+    - idio_skew_ff3
+    - idio_vol_capm_21d
+    - ch_lt_noa
+    - ch_lt_invest
+    - mkt_equity
+    - mispricing_mgmt
+    - mispricing_perf
+    - ch_conc_op_assets
+    - ch_conc_op_liab
+    - net_total_iss
+    - ch_net_fin_assets
+    - earn_persistence
+    - roe
+    - consec_eps_increases
+    - earn_vol
+    - q_roa
+    - ch_q_roa
+    - q_roe
+    - ch_q_roe
+    - ch_net_conc_noncur_op_assets
+    - net_operating_assets
+    - ch_net_operating_assets
+    - ch_ocf_to_assets
+    - share_turnover
+    - altman_z
+  learner: "elasticnet"
+  en_alpha: 0.0005
+  en_l1_ratio: 0.1
+  stability_k: 5
+  max_features: 30
+
+blending:
+  numeric_weight: 0.8
+  llm_weight: 0.2
+  target_long_abs: 1.0
+  target_short_abs: 1.0
+
+risk:
+  mode: "multiplicative"
+  file_pattern: "risk_adj/risk_adj_{YYYY}-{MM}.csv"
+
+per_period_outputs:
+  dir: "reports/per_period"
+
+portfolio:
+  min_holdings: 100
+  max_holdings: 250
+  band_fraction: 0.05
+
 seeds:
   numpy: 42
   torch: 42
