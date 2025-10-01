@@ -15,6 +15,8 @@ make setup && make init
 ```bash
 pytest --maxfail=1 --cov=src
 make run-embeddings && make run-text && make run-train && make run-blend && make run-scores && make run-backtest
+# Phase 3 per-period outputs and backtest from final weights
+make run-numeric-blend && make run-risk-outputs && make run-backtest-final
 ```
 
 Artifacts:
@@ -32,3 +34,4 @@ Artifacts:
 ## Data placement
 - Place raw CSVs under `data/raw/` as per `DATA_DICTIONARY.md`.
 - MLflow runs: local filesystem under `mlruns/`. Artifacts include `artifacts/composite_weights.json` and `reports/*`.
+ - Per-period CSVs: `reports/per_period/weights_after_risk_YYYY-MM.csv`, `returns_by_stock_YYYY-MM.csv`, `ret_cutout_YYYY-MM.csv`.
