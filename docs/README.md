@@ -34,4 +34,4 @@ Artifacts:
 ## Data placement
 - Place raw CSVs under `data/raw/` as per `DATA_DICTIONARY.md`.
 - MLflow runs: local filesystem under `mlruns/`. Artifacts include `artifacts/composite_weights.json` and `reports/*`.
- - Per-period CSVs: `reports/per_period/weights_after_risk_YYYY-MM.csv`, `returns_by_stock_YYYY-MM.csv`, `ret_cutout_YYYY-MM.csv`.
+- Per-period CSVs: `reports/per_period/weights_after_risk_YYYY-MM.csv`, `returns_by_stock_YYYY-MM.csv`, `ret_cutout_YYYY-MM.csv`.
